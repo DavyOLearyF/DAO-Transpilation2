@@ -1,0 +1,27 @@
+{
+  "name": "dao",
+  "version": "1.0.0",
+  "description": "[![Build Status](https://travis-ci.org/slockit/DAO.png)](https://travis-ci.org/slockit/DAO)",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blockchainsllc/DAO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blockchainsllc/DAO/issues"
+  },
+  "homepage": "https://github.com/blockchainsllc/DAO#readme",
+  "devDependencies": {
+    "ganache-cli": "^6.12.2",
+    "truffle": "^5.11.5"
+  }
+}
