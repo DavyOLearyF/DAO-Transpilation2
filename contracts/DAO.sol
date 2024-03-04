@@ -24,6 +24,8 @@ to automate organizational governance and decision-making.
 import "./TokenCreation.sol";
 import "./ManagedAccount.sol";
 
+pragma solidity ^0.8.21;
+
 contract DAOInterface {
 
     // The amount of days for which people who try to participate in the
@@ -146,7 +148,10 @@ contract DAOInterface {
     }
 
     // Used to restrict access to certain functions to only DAO Token Holders
-    modifier onlyTokenholders {}
+    modifier onlyTokenholders {
+        require(balanceOf(msg.sender) > 0, "Caller is not a token holder.");
+        _;
+    }
 
     /// @dev Constructor setting the Curator and the address
     /// for the contract able to create another DAO as well as the parameters
@@ -178,14 +183,14 @@ contract DAOInterface {
 
     /// @notice Create Token with `msg.sender` as the beneficiary
     /// @return Whether the token creation was successful
-    function () returns (bool success);
+    fallback () external returns (bool success);
 
 
     /// @dev This function is used to send ether back
     /// to the DAO, it can also be used to receive payments that should not be
     /// counted as rewards (donations, grants, etc.)
     /// @return Whether the DAO received the ether successfully
-    function receiveEther() returns(bool);
+    function receiveEther() external payable returns(bool);
 
     /// @notice `msg.sender` creates a proposal to send `_amount` Wei to
     /// `_recipient` with the transaction data `_transactionData`. If
@@ -207,7 +212,7 @@ contract DAOInterface {
         bytes _transactionData,
         uint _debatingPeriod,
         bool _newCurator
-    ) onlyTokenholders returns (uint _proposalID);
+    ) onlyTokenholders public returns (uint _proposalID);
 
     /// @notice Check that the proposal with the ID `_proposalID` matches the
     /// transaction which sends `_amount` with data `_transactionData`
@@ -222,12 +227,12 @@ contract DAOInterface {
         address _recipient,
         uint _amount,
         bytes _transactionData
-    ) constant returns (bool _codeChecksOut);
+    ) public view returns (bool _codeChecksOut);
 
     /// @notice Vote on proposal `_proposalID` with `_supportsProposal`
     /// @param _proposalID The proposal ID
     /// @param _supportsProposal Yes/No - support of the proposal
-    function vote(uint _proposalID, bool _supportsProposal);
+    function vote(uint _proposalID, bool _supportsProposal) external;
 
     /// @notice Checks whether proposal `_proposalID` with transaction data
     /// `_transactionData` has been voted for or rejected, and executes the
@@ -238,7 +243,7 @@ contract DAOInterface {
     function executeProposal(
         uint _proposalID,
         bytes _transactionData
-    ) returns (bool _success);
+    ) public returns (bool _success);
 
     /// @notice ATTENTION! I confirm to move my remaining ether to a new DAO
     /// with `_newCurator` as the new Curator, as has been
@@ -254,13 +259,13 @@ contract DAOInterface {
     function splitDAO(
         uint _proposalID,
         address _newCurator
-    ) returns (bool _success);
+    ) external returns (bool _success);
 
     /// @dev can only be called by the DAO itself through a proposal
     /// updates the contract of the DAO by sending all ether and rewardTokens
     /// to the new DAO. The new DAO needs to be approved by the Curator
     /// @param _newContract the address of the new contract
-    function newContract(address _newContract);
+    function newContract(address _newContract) internal;
 
 
     /// @notice Add a new possible recipient `_recipient` to the whitelist so
@@ -285,7 +290,7 @@ contract DAOInterface {
 
     /// @notice Get my portion of the reward that was sent to `rewardAccount`
     /// @return Whether the call was successful
-    function getMyReward() returns(bool _success);
+    function getMyReward() public returns(bool _success);
 
     /// @notice Withdraw `_account`'s portion of the reward from `rewardAccount`
     /// to `_account`'s balance
@@ -297,7 +302,7 @@ contract DAOInterface {
     /// @param _to The address of the recipient
     /// @param _amount The amount of tokens to be transfered
     /// @return Whether the transfer was successful or not
-    function transferWithoutReward(address _to, uint256 _amount) returns (bool success);
+    function transferWithoutReward(address _to, uint256 _amount) public returns (bool success);
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
     /// is approved by `_from`. Prior to this getMyReward() is called.
@@ -309,19 +314,19 @@ contract DAOInterface {
         address _from,
         address _to,
         uint256 _amount
-    ) returns (bool success);
+    ) public returns (bool success);
 
     /// @notice Doubles the 'minQuorumDivisor' in the case quorum has not been
     /// achieved in 52 weeks
     /// @return Whether the change was successful or not
-    function halveMinQuorum() returns (bool _success);
+    function halveMinQuorum() internal returns (bool _success);
 
     /// @return total number of proposals ever created
-    function numberOfProposals() constant returns (uint _numberOfProposals);
+    function numberOfProposals() public view returns (uint _numberOfProposals);
 
     /// @param _proposalID Id of the new curator proposal
     /// @return Address of the new DAO
-    function getNewDAOAddress(uint _proposalID) constant returns (address _newDAO);
+    function getNewDAOAddress(uint _proposalID) public view returns (address _newDAO);
 
     /// @param _account The address of the account which is checked.
     /// @return Whether the account is blocked (not allowed to transfer tokens) or not.
@@ -330,7 +335,7 @@ contract DAOInterface {
     /// @notice If the caller is blocked by a proposal whose voting deadline
     /// has exprired then unblock him.
     /// @return Whether the account is blocked (not allowed to transfer tokens) or not.
-    function unblockMe() returns (bool);
+    function unblockMe() public returns (bool);
 
     event ProposalAdded(
         uint indexed proposalID,
@@ -351,7 +356,7 @@ contract DAO is DAOInterface, Token, TokenCreation {
     // Modifier that allows only shareholders to vote and create new proposals
     modifier onlyTokenholders {
         if (balanceOf(msg.sender) == 0) throw;
-            _
+            _;
     }
 
     function DAO(
@@ -389,7 +394,7 @@ contract DAO is DAOInterface, Token, TokenCreation {
         allowedRecipients[curator] = true;
     }
 
-    function () returns (bool success) {
+    fallback () returns (bool success) {
         if (now < closingTime + creationGracePeriod && msg.sender != address(extraBalance))
             return createTokenProxy(msg.sender);
         else
@@ -479,7 +484,7 @@ contract DAO is DAOInterface, Token, TokenCreation {
         address _recipient,
         uint _amount,
         bytes _transactionData
-    ) noEther constant returns (bool _codeChecksOut) {
+    ) noEther view returns (bool _codeChecksOut) {
         Proposal p = proposals[_proposalID];
         return p.proposalHash == sha3(_recipient, _amount, _transactionData);
     }
@@ -847,12 +852,12 @@ contract DAO is DAOInterface, Token, TokenCreation {
             return false;
     }
 
-    function actualBalance() constant returns (uint _actualBalance) {
+    function actualBalance() view returns (uint _actualBalance) {
         return this.balance - sumOfProposalDeposits;
     }
 
 
-    function minQuorum(uint _value) internal constant returns (uint _minQuorum) {
+    function minQuorum(uint _value) internal view returns (uint _minQuorum) {
         // minimum of 20% and maximum of 53.33%
         return totalSupply / minQuorumDivisor +
             (_value * totalSupply) / (3 * (actualBalance() + rewardToken[address(this)]));
@@ -863,11 +868,11 @@ contract DAO is DAOInterface, Token, TokenCreation {
         // this can only be called after `quorumHalvingPeriod` has passed or at anytime after
         // fueling by the curator with a delay of at least `minProposalDebatePeriod`
         // between the calls
-        if ((lastTimeMinQuorumMet < (now - quorumHalvingPeriod) || msg.sender == curator)
-            && lastTimeMinQuorumMet < (now - minProposalDebatePeriod)
-            && now >= closingTime
+        if ((lastTimeMinQuorumMet < (block.timestamp - quorumHalvingPeriod) || msg.sender == curator)
+            && lastTimeMinQuorumMet < (block.timestamp - minProposalDebatePeriod)
+            && block.timestamp >= closingTime
             && proposals.length > 1) {
-            lastTimeMinQuorumMet = now;
+            lastTimeMinQuorumMet = block.timestamp;
             minQuorumDivisor *= 2;
             return true;
         } else {
@@ -881,19 +886,19 @@ contract DAO is DAOInterface, Token, TokenCreation {
             _newCurator,
             0,
             0,
-            now + splitExecutionPeriod,
+            block.timestamp + splitExecutionPeriod,
             name,
             symbol,
             decimals
         );
     }
 
-    function numberOfProposals() constant returns (uint _numberOfProposals) {
+    function numberOfProposals() view returns (uint _numberOfProposals) {
         // Don't count index 0. It's used by isBlocked() and exists from start
         return proposals.length - 1;
     }
 
-    function getNewDAOAddress(uint _proposalID) constant returns (address _newDAO) {
+    function getNewDAOAddress(uint _proposalID) view returns (address _newDAO) {
         return proposals[_proposalID].splitData[0].newDAO;
     }
 

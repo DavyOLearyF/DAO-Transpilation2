@@ -45,6 +45,8 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 
 import "./DAO.sol";
 
+pragma solidity ^0.8.21;
+
 contract PFOffer {
 
     // Period of time after which money can be withdrawn from this contract
@@ -98,16 +100,16 @@ contract PFOffer {
     modifier onlyClient {
         if (msg.sender != address(client))
             throw;
-        _
+        _;
     }
     modifier onlyContractor {
         if (msg.sender != address(contractor))
             throw;
-        _
+        _;
     }
 
     // Prevents methods from perfoming any value transfer
-    modifier noEther() {if (msg.value > 0) throw; _}
+    modifier noEther() {if (msg.value > 0) throw; _;}
 
     function PFOffer(
         address _contractor,
@@ -128,64 +130,64 @@ contract PFOffer {
     }
 
     // non-value-transfer getters
-    function getTotalCost() noEther constant returns (uint) {
+    function getTotalCost() noEther view returns (uint) {
         return totalCost;
     }
 
-    function getInitialWithdrawal() noEther constant returns (uint) {
+    function getInitialWithdrawal() noEther view returns (uint) {
         return initialWithdrawal;
     }
 
-    function getMinDailyWithdrawalLimit() noEther constant returns (uint128) {
+    function getMinDailyWithdrawalLimit() noEther view returns (uint128) {
         return minDailyWithdrawalLimit;
     }
 
-    function getDailyWithdrawalLimit() noEther constant returns (uint128) {
+    function getDailyWithdrawalLimit() noEther view returns (uint128) {
         return dailyWithdrawalLimit;
     }
 
-    function getContractor() noEther constant returns (address) {
+    function getContractor() noEther view returns (address) {
         return contractor;
     }
 
-    function getHashOfTheProposalDocument() noEther constant returns (bytes32) {
+    function getHashOfTheProposalDocument() noEther view returns (bytes32) {
         return hashOfTheProposalDocument;
     }
 
-    function getLastWithdrawal() noEther constant returns (uint) {
+    function getLastWithdrawal() noEther view returns (uint) {
         return lastWithdrawal;
     }
 
-    function getDateOfSignature() noEther constant returns (uint) {
+    function getDateOfSignature() noEther view returns (uint) {
         return dateOfSignature;
     }
 
-    function getClient() noEther constant returns (DAO) {
+    function getClient() noEther view returns (DAO) {
         return client;
     }
 
-    function getOriginalClient() noEther constant returns (DAO) {
+    function getOriginalClient() noEther view returns (DAO) {
         return originalClient;
     }
 
-    function getIsContractValid() noEther constant returns (bool) {
+    function getIsContractValid() noEther view returns (bool) {
         return isContractValid;
     }
 
-    function getInitialWithdrawalDone() noEther constant returns (bool) {
+    function getInitialWithdrawalDone() noEther view returns (bool) {
         return initialWithdrawalDone;
     }
 
-    function getWasApprovedBeforeDeadline() noEther constant returns (bool) {
+    function getWasApprovedBeforeDeadline() noEther view returns (bool) {
         return wasApprovedBeforeDeadline;
     }
 
-    function getProposalID() noEther constant returns (uint) {
+    function getProposalID() noEther view returns (uint) {
         return proposalID;
     }
 
     function sign() {
-        var (_,,,votingDeadline,,) = client.proposals(proposalID);
+        (_,,,votingDeadline,,) = client.proposals(proposalID);
         if (msg.sender != address(originalClient) // no good samaritans give us ether
             || msg.value != totalCost    // no under/over payment
             || dateOfSignature != 0       // don't sign twice
@@ -228,7 +230,7 @@ contract PFOffer {
         if (amount > this.balance) {
             amount = this.balance;
         }
-        var lastWithdrawalReset = lastWithdrawal;
+        uint lastWithdrawalReset = lastWithdrawal;
         lastWithdrawal = now;
         if (!contractor.send(amount))
             lastWithdrawal = lastWithdrawalReset;
@@ -251,7 +253,7 @@ contract PFOffer {
     // function to register its proposal ID with the offer contract
     // so that the vote can be watched and checked with `checkVoteStatus()`
     function watchProposal(uint _proposalID) noEther onlyContractor {
-        var (recipient,,,votingDeadline,open,) = client.proposals(_proposalID);
+        (recipient,,,votingDeadline,open,) = client.proposals(_proposalID);
         if (recipient == address(this)
             && votingDeadline > now
             && open
@@ -263,7 +265,7 @@ contract PFOffer {
     // The proposal will not accept the results of the vote if it wasn't able
     // to be sure that YEA was able to succeed 48 hours before the deadline
     function checkVoteStatus() noEther {
-        var (,,,votingDeadline,,,,,,yea,nay,) = client.proposals(proposalID);
+        (,,,votingDeadline,,,,,,yea,nay,) = client.proposals(proposalID);
         uint quorum = yea * 100 / client.totalSupply();
 
         // Only execute until 48 hours before the deadline
@@ -282,7 +284,7 @@ contract PFOffer {
         client = _newClient;
     }
 
-    function () {
+    fallback () {
         throw; // this is a business contract, no donations
     }
 }

@@ -25,6 +25,8 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 
 import "./Offer.sol";
 
+pragma solidity ^0.8.21;
+
 contract RewardOffer is Offer {
 
     uint rewardDivisor;
@@ -57,11 +59,11 @@ contract RewardOffer is Offer {
     }
 
     // non-value-transfer getters
-    function getRewardDivisor() noEther constant returns (uint) {
+    function getRewardDivisor() noEther view returns (uint) {
         return rewardDivisor;
     }
 
-    function getDeploymentReward() noEther constant returns (uint) {
+    function getDeploymentReward() noEther view returns (uint) {
         return deploymentReward;
     }
 }

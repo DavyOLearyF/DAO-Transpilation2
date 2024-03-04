@@ -15,8 +15,10 @@ You should have received a copy of the GNU lesser General Public License
 along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import "./libs/oraclize.sol";
+import "../libs/oraclize.sol";
 import "./Token.sol";
+
+pragma solidity ^0.8.21;
 
 /////////////////////
 // There is a solidity bug in the return parameters that it's not solved
@@ -49,7 +51,7 @@ contract DAO {
         bool _supportsProposal
     ) returns (uint _voteID);
 
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function balanceOf(address _owner) view returns (uint256 balance);
 }
 // End of workaround proxy
 ////////////////////
@@ -166,7 +168,7 @@ contract DTHPoolInterface {
 
 contract DTHPool is DTHPoolInterface, Token, usingOraclize {
 
-    modifier onlyDelegate() {if (msg.sender != delegate) throw; _}
+    modifier onlyDelegate() {if (msg.sender != delegate) throw; _;}
 
     // DTHPool(address _daoAddress, address _delegate, uint _maxTimeBlocked, string _delegateName, string _delegateUrl, string _tokenSymbol);
 
@@ -230,7 +232,7 @@ contract DTHPool is DTHPoolInterface, Token, usingOraclize {
             throw;
         }
 
-        var (,,,votingDeadline, ,,,,newCurator) = dao.proposals(_proposalID);
+        (,,,uint votingDeadline, ,,,,bool newCurator) = dao.proposals(_proposalID);
 
         if (votingDeadline < now || newCurator ) {
             throw;

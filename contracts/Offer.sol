@@ -34,6 +34,8 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 
 import "./DAO.sol";
 
+pragma solidity ^0.8.21;
+
 contract Offer {
 
     // Period of time after the passing of a proposal during which the offer
@@ -92,11 +94,11 @@ contract Offer {
     modifier onlyClient {
         if (msg.sender != address(client))
             throw;
-        _
+        _;
     }
 
     // Prevents methods from perfoming any value transfer
-    modifier noEther() {if (msg.value > 0) throw; _}
+    modifier noEther() {if (msg.value > 0) throw; _;}
 
     function Offer(
         address _contractor,
@@ -119,59 +121,59 @@ contract Offer {
     }
 
     // non-value-transfer getters
-    function getTotalCost() noEther constant returns (uint) {
+    function getTotalCost() noEther view returns (uint) {
         return totalCost;
     }
 
-    function getInitialWithdrawal() noEther constant returns (uint) {
+    function getInitialWithdrawal() noEther view returns (uint) {
         return initialWithdrawal;
     }
 
-    function getMinDailyWithdrawalLimit() noEther constant returns (uint128) {
+    function getMinDailyWithdrawalLimit() noEther view returns (uint128) {
         return minDailyWithdrawalLimit;
     }
 
-    function getDailyWithdrawalLimit() noEther constant returns (uint128) {
+    function getDailyWithdrawalLimit() noEther view returns (uint128) {
         return dailyWithdrawalLimit;
     }
 
-    function getPayoutFreezePeriod() noEther constant returns (uint) {
+    function getPayoutFreezePeriod() noEther view returns (uint) {
         return payoutFreezePeriod;
     }
 
-    function getContractor() noEther constant returns (address) {
+    function getContractor() noEther view returns (address) {
         return contractor;
     }
 
-    function getHashOfTheProposalDocument() noEther constant returns (bytes32) {
+    function getHashOfTheProposalDocument() noEther view returns (bytes32) {
         return hashOfTheProposalDocument;
     }
 
-    function getLastWithdrawal() noEther constant returns (uint) {
+    function getLastWithdrawal() noEther view returns (uint) {
         return lastWithdrawal;
     }
 
-    function getDateOfSignature() noEther constant returns (uint) {
+    function getDateOfSignature() noEther view returns (uint) {
         return dateOfSignature;
     }
 
-    function getClient() noEther constant returns (DAO) {
+    function getClient() noEther view returns (DAO) {
         return client;
     }
 
-    function getOriginalClient() noEther constant returns (DAO) {
+    function getOriginalClient() noEther view returns (DAO) {
         return originalClient;
     }
 
-    function getIsContractValid() noEther constant returns (bool) {
+    function getIsContractValid() noEther view returns (bool) {
         return isContractValid;
     }
 
-    function getInitialWithdrawalDone() noEther constant returns (bool) {
+    function getInitialWithdrawalDone() noEther view returns (bool) {
         return initialWithdrawalDone;
     }
 
-    function getVotingDeadline() noEther constant returns (uint) {
+    function getVotingDeadline() noEther view returns (uint) {
         return votingDeadline;
     }
 
@@ -232,7 +234,7 @@ contract Offer {
         if (amount > this.balance) {
             amount = this.balance;
         }
-        var lastWithdrawalReset = lastWithdrawal;
+        uint lastWithdrawalReset = lastWithdrawal;
         lastWithdrawal = now;
         if (!contractor.send(amount))
             lastWithdrawal = lastWithdrawalReset;
@@ -259,7 +261,7 @@ contract Offer {
         client = _newClient;
     }
 
-    function () {
+    fallback () {
         throw; // This is a business contract, no donations.
     }
 }

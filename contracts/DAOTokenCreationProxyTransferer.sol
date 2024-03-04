@@ -30,6 +30,8 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 
 import "./TokenCreation.sol";
 
+pragma solidity ^0.8.21;
+
 contract DAOTokenCreationProxyTransferer {
     address public owner;
     address public dao;
@@ -45,19 +47,19 @@ contract DAOTokenCreationProxyTransferer {
     }
 
     // default-function called when values are sent.
-    function () {
+    fallback () external{
        sendValues();
     }
 
     function sendValues() {
-        if (this.balance == 0)
+        if (address(this).balance == 0)
             return;
 
         TokenCreationInterface fueling = TokenCreationInterface(dao);
-        if (now > fueling.closingTime() ||
-            !fueling.createTokenProxy.value(this.balance)(owner)) {
+        if (block.timestamp > fueling.closingTime() ||
+            !fueling.createTokenProxy.value(address(this).balance)(owner)) {
 
-           owner.send(this.balance);
+           owner.send(address(this).balance);
         }
     }
 }

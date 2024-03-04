@@ -27,6 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+pragma solidity ^0.8.21;
+
 contract OraclizeI {
     address public cbAddress;
     function query(uint _timestamp, string _datasource, string _arg) returns (bytes32 _id);
@@ -36,7 +38,7 @@ contract OraclizeI {
     function getPrice(string _datasource) returns (uint _dsprice);
     function getPrice(string _datasource, uint gaslimit) returns (uint _dsprice);
     function useCoupon(string _coupon);
-    function setProofType(byte _proofType);
+    function setProofType(bytes1 _proofType);
 }
 contract OraclizeAddrResolverI {
     function getAddress() returns (address _addr);
@@ -45,9 +47,9 @@ contract usingOraclize {
     uint constant day = 60*60*24;
     uint constant week = 60*60*24*7;
     uint constant month = 60*60*24*30;
-    byte constant proofType_NONE = 0x00;
-    byte constant proofType_TLSNotary = 0x10;
-    byte constant proofStorage_IPFS = 0x01;
+    bytes1 constant proofType_NONE = 0x00;
+    bytes1 constant proofType_TLSNotary = 0x10;
+    bytes1 constant proofStorage_IPFS = 0x01;
     uint8 constant networkID_auto = 0;
     uint8 constant networkID_mainnet = 1;
     uint8 constant networkID_testnet = 2;
@@ -64,12 +66,12 @@ contract usingOraclize {
             oraclizeAddr = OAR.getAddress();
         }
         oraclize = OraclizeI(oraclizeAddr);
-        _
+        _;
     }
     modifier coupon(string code){
         oraclize = OraclizeI(OAR.getAddress());
         oraclize.useCoupon(code);
-        _
+        _;
     }
 
     function oraclize_setNetwork(uint8 networkID) internal returns(bool){
@@ -131,11 +133,11 @@ contract usingOraclize {
     function oraclize_cbAddress() oraclizeAPI internal returns (address){
         return oraclize.cbAddress();
     }
-    function oraclize_setProof(byte proofP) oraclizeAPI internal {
+    function oraclize_setProof(bytes1 proofP) oraclizeAPI internal {
         return oraclize.setProofType(proofP);
     }
 
-    function getCodeSize(address _addr) constant internal returns(uint _size) {
+    function getCodeSize(address _addr) view internal returns(uint _size) {
         assembly {
             _size := extcodesize(_addr)
         }

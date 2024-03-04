@@ -25,6 +25,8 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 import "./Token.sol";
 import "./ManagedAccount.sol";
 
+pragma solidity ^0.8.21;
+
 contract TokenCreationInterface {
 
     // End of token creation, in Unix time
@@ -65,15 +67,15 @@ contract TokenCreationInterface {
     /// @notice Create Token with `_tokenHolder` as the initial owner of the Token
     /// @param _tokenHolder The address of the Tokens's recipient
     /// @return Whether the token creation was successful
-    function createTokenProxy(address _tokenHolder) returns (bool success);
+    function createTokenProxy(address _tokenHolder) public returns (bool success);
 
     /// @notice Refund `msg.sender` in the case the Token Creation did
     /// not reach its minimum fueling goal
-    function refund();
+    function refund() public;
 
     /// @return The divisor used to calculate the token creation rate during
     /// the creation phase
-    function divisor() constant returns (uint divisor);
+    function divisor() public view returns (uint divisor);
 
     event FuelingToDate(uint value);
     event CreatedToken(address indexed to, uint amount);
@@ -82,7 +84,7 @@ contract TokenCreationInterface {
 
 
 contract TokenCreation is TokenCreationInterface, Token {
-    function TokenCreation(
+    constructor(
         uint _minTokensToCreate,
         uint _closingTime,
         address _privateCreation,
@@ -100,27 +102,23 @@ contract TokenCreation is TokenCreationInterface, Token {
         
     }
 
-    function createTokenProxy(address _tokenHolder) returns (bool success) {
-        if (now < closingTime && msg.value > 0
-            && (privateCreation == 0 || privateCreation == msg.sender)) {
-
-            uint token = (msg.value * 20) / divisor();
-            extraBalance.call.value(msg.value - token)();
-            balances[_tokenHolder] += token;
-            totalSupply += token;
-            weiGiven[_tokenHolder] += msg.value;
-            CreatedToken(_tokenHolder, token);
-            if (totalSupply >= minTokensToCreate && !isFueled) {
-                isFueled = true;
-                FuelingToDate(totalSupply);
-            }
-            return true;
+    function createTokenProxy(address _tokenHolder) public returns (bool success) {
+        assert(!(block.timestamp < closingTime && msg.value > 0 && (privateCreation == 0 || privateCreation == msg.sender)));
+        uint token = (msg.value * 20) / divisor();
+        extraBalance.call.value(msg.value - token)();
+        balances[_tokenHolder] += token;
+        totalSupply += token;
+        weiGiven[_tokenHolder] += msg.value;
+        CreatedToken(_tokenHolder, token);
+        if (totalSupply >= minTokensToCreate && !isFueled) {
+            isFueled = true;
+            FuelingToDate(totalSupply);
         }
-        throw;
+        return true;
     }
 
-    function refund() noEther {
-        if (now > closingTime && !isFueled) {
+    function refund() noEther public{
+        if (block.timestamp > closingTime && !isFueled) {
             // Get extraBalance - will only succeed when called for the first time
             if (extraBalance.balance >= extraBalance.accumulatedInput())
                 extraBalance.payOut(address(this), extraBalance.accumulatedInput());
@@ -137,15 +135,15 @@ contract TokenCreation is TokenCreationInterface, Token {
         }
     }
 
-    function divisor() constant returns (uint divisor) {
+    function divisor() public view returns (uint divisor) {
         // The number of (base unit) tokens per wei is calculated
         // as `msg.value` * 20 / `divisor`
         // The fueling period starts with a 1:1 ratio
-        if (closingTime - 2 weeks > now) {
+        if (closingTime - 2 weeks > block.timestamp) {
             return 20;
         // Followed by 10 days with a daily creation rate increase of 5%
-        } else if (closingTime - 4 days > now) {
-            return (20 + (now - (closingTime - 2 weeks)) / (1 days));
+        } else if (closingTime - 4 days > block.timestamp) {
+            return (20 + (block.timestamp - (closingTime - 2 weeks)) / (1 days));
         // The last 4 days there is a constant creation rate ratio of 1:1.5
         } else {
             return 30;
