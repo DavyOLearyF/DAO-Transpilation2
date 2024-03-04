@@ -37,7 +37,7 @@ contract DAOTokenCreationProxyTransferer {
     address public dao;
 
     //constructor
-    function DAOTokenCreationProxyTransferer(address _owner, address _dao) {
+    constructor(address _owner, address _dao) {
         owner = _owner;
         dao = _dao;
 
@@ -51,7 +51,7 @@ contract DAOTokenCreationProxyTransferer {
        sendValues();
     }
 
-    function sendValues() {
+    function sendValues() internal{
         if (address(this).balance == 0)
             return;
 
