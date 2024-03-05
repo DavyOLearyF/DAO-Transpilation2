@@ -185,7 +185,7 @@ contract PFOffer {
     }
 
     function sign() public {
-        (_,,,votingDeadline,,) = client.proposals(proposalID);
+        (,,,uint votingDeadline,,) = client.proposals(proposalID);
         assert (!(msg.sender != address(originalClient) // no good samaritans give us ether
             || msg.value != totalCost    // no under/over payment
             || dateOfSignature != 0       // don't sign twice
@@ -219,8 +219,7 @@ contract PFOffer {
     // Executing this function before the Offer is signed off by the Client
     // makes no sense as this contract has no ether.
     function withdraw() noEther public {
-        if (msg.sender != contractor || block.timestamp < dateOfSignature + payoutFreezePeriod)
-            throw;
+        assert (!(msg.sender != contractor || block.timestamp < dateOfSignature + payoutFreezePeriod));
         uint timeSinceLastPayment = block.timestamp - lastWithdrawal;
         // Calculate the amount using 1 second precision.
         uint amount = (timeSinceLastPayment * dailyWithdrawalLimit) / (1 days);
@@ -247,7 +246,7 @@ contract PFOffer {
     // function to register its proposal ID with the offer contract
     // so that the vote can be watched and checked with `checkVoteStatus()`
     function watchProposal(uint _proposalID) noEther onlyContractor public {
-        (recipient,,,votingDeadline,open,) = client.proposals(_proposalID);
+        (address recipient,,,uint votingDeadline,bool open,) = client.proposals(_proposalID);
         if (recipient == address(this)
             && votingDeadline > block.timestamp
             && open
@@ -259,7 +258,7 @@ contract PFOffer {
     // The proposal will not accept the results of the vote if it wasn't able
     // to be sure that YEA was able to succeed 48 hours before the deadline
     function checkVoteStatus() noEther public {
-        (,,,votingDeadline,,,,,,yea,nay,) = client.proposals(proposalID);
+        (,,,uint votingDeadline,,,,,,uint yea,uint nay,) = client.proposals(proposalID);
         uint quorum = yea * 100 / client.totalSupply();
 
         // Only execute until 48 hours before the deadline

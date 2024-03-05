@@ -27,7 +27,7 @@ import "./ManagedAccount.sol";
 
 pragma solidity ^0.8.21;
 
-contract TokenCreationInterface {
+abstract contract TokenCreationInterface {
 
     // End of token creation, in Unix time
     uint public closingTime;
@@ -66,16 +66,16 @@ contract TokenCreationInterface {
 
     /// @notice Create Token with `_tokenHolder` as the initial owner of the Token
     /// @param _tokenHolder The address of the Tokens's recipient
-    /// @return Whether the token creation was successful
-    function createTokenProxy(address _tokenHolder) public returns (bool success);
+    /// @return success Whether the token creation was successful
+    function createTokenProxy(address _tokenHolder) public virtual payable returns (bool success);
 
     /// @notice Refund `msg.sender` in the case the Token Creation did
     /// not reach its minimum fueling goal
-    function refund() public;
+    function refund() public virtual;
 
-    /// @return The divisor used to calculate the token creation rate during
+    /// @return divisor The divisor used to calculate the token creation rate during
     /// the creation phase
-    function divisor() public view returns (uint divisor);
+    function divisor() public view virtual returns (uint divisor);
 
     event FuelingToDate(uint value);
     event CreatedToken(address indexed to, uint amount);
@@ -83,13 +83,16 @@ contract TokenCreationInterface {
 }
 
 
-contract TokenCreation is TokenCreationInterface, Token {
+abstract contract TokenCreation is TokenCreationInterface, Token {
+
+    address payable senderPayable = payable(msg.sender);
+
     constructor(
         uint _minTokensToCreate,
         uint _closingTime,
         address _privateCreation,
-        string _tokenName,
-        string _tokenSymbol,
+        string memory _tokenName,
+        string memory _tokenSymbol,
         uint8 _decimalPlaces) {
 
         closingTime = _closingTime;
@@ -102,10 +105,11 @@ contract TokenCreation is TokenCreationInterface, Token {
         
     }
 
-    function createTokenProxy(address _tokenHolder) public returns (bool success) {
-        assert(!(block.timestamp < closingTime && msg.value > 0 && (privateCreation == 0 || privateCreation == msg.sender)));
+    function createTokenProxy(address _tokenHolder) public override payable returns (bool success) {
+        assert(!(block.timestamp < closingTime && msg.value > 0 && (privateCreation == address(0) || privateCreation == msg.sender)));
         uint token = (msg.value * 20) / divisor();
-        extraBalance.call.value(msg.value - token)();
+        (bool sent, ) = address(extraBalance).call{value: msg.value - token}("");
+        require(sent, "Failed to send Ether");
         balances[_tokenHolder] += token;
         totalSupply += token;
         weiGiven[_tokenHolder] += msg.value;
@@ -117,14 +121,14 @@ contract TokenCreation is TokenCreationInterface, Token {
         return true;
     }
 
-    function refund() noEther public{
+    function refund() noEther public override{
         if (block.timestamp > closingTime && !isFueled) {
             // Get extraBalance - will only succeed when called for the first time
-            if (extraBalance.balance >= extraBalance.accumulatedInput())
+            if (address(extraBalance).balance >= extraBalance.accumulatedInput())
                 extraBalance.payOut(address(this), extraBalance.accumulatedInput());
 
             // Execute refund
-            if (msg.sender.send(weiGiven[msg.sender])) { 
+            if (senderPayable.send(weiGiven[msg.sender])) { 
             // its the recipients responsibilty to ensure 
             // their address does not use too much gas
                 Refund(msg.sender, weiGiven[msg.sender]);
@@ -135,7 +139,7 @@ contract TokenCreation is TokenCreationInterface, Token {
         }
     }
 
-    function divisor() public view returns (uint divisor) {
+    function divisor() public view override returns (uint divisor) {
         // The number of (base unit) tokens per wei is calculated
         // as `msg.value` * 20 / `divisor`
         // The fueling period starts with a 1:1 ratio

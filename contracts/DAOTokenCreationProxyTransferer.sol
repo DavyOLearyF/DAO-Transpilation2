@@ -57,9 +57,9 @@ contract DAOTokenCreationProxyTransferer {
 
         TokenCreationInterface fueling = TokenCreationInterface(dao);
         if (block.timestamp > fueling.closingTime() ||
-            !fueling.createTokenProxy.value(address(this).balance)(owner)) {
+            !fueling.createTokenProxy{value : address(this).balance}(owner)) {
 
-           owner.send(address(this).balance);
+           payable(owner).send(address(this).balance);
         }
     }
 }

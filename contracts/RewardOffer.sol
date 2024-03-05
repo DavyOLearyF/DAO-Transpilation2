@@ -32,7 +32,7 @@ contract RewardOffer is Offer {
     uint rewardDivisor;
     uint deploymentReward;
 
-    function RewardOffer(
+    constructor(
         address _contractor,
         address _client,
         bytes32 _hashOfTheProposalDocument,
@@ -50,20 +50,20 @@ contract RewardOffer is Offer {
         _payoutFreezePeriod) {
     }
 
-    function setRewardDivisor(uint _rewardDivisor) onlyClient noEther {
+    function setRewardDivisor(uint _rewardDivisor) onlyClient noEther public {
         rewardDivisor = _rewardDivisor;
     }
 
-    function setDeploymentReward(uint _deploymentReward) onlyClient noEther {
+    function setDeploymentReward(uint _deploymentReward) onlyClient noEther public {
         deploymentReward = _deploymentReward;
     }
 
     // non-value-transfer getters
-    function getRewardDivisor() noEther view returns (uint) {
+    function getRewardDivisor() noEther public view returns (uint) {
         return rewardDivisor;
     }
 
-    function getDeploymentReward() noEther view returns (uint) {
+    function getDeploymentReward() noEther public view returns (uint) {
         return deploymentReward;
     }
 }
