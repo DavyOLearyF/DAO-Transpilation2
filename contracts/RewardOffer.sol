@@ -34,7 +34,7 @@ contract RewardOffer is Offer {
 
     constructor(
         address _contractor,
-        address _client,
+        address payable _client,
         bytes32 _hashOfTheProposalDocument,
         uint _totalCost,
         uint _initialWithdrawal,

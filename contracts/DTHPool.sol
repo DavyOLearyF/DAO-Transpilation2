@@ -300,7 +300,8 @@ abstract contract DTHPool is DTHPoolInterface, Token, usingOraclize {
     function getEther() onlyDelegate public override returns (uint _amount) {
         uint amount = address(this).balance;
 
-        assert (!(!delegate.call.value(amount)()));
+        (bool success, ) = delegate.call{value: amount}("");
+        assert(success);
 
         return amount;
     }

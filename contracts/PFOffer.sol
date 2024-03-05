@@ -111,7 +111,7 @@ contract PFOffer {
 
     constructor(
         address _contractor,
-        address _client,
+        address payable _client,
         bytes32 _hashOfTheProposalDocument,
         uint _totalCost,
         uint _initialWithdrawal,
@@ -185,7 +185,7 @@ contract PFOffer {
     }
 
     function sign() public {
-        (,,,uint votingDeadline,,) = client.proposals(proposalID);
+        (,,,uint votingDeadline,,,,,,,,) = client.proposals(proposalID);
         assert (!(msg.sender != address(originalClient) // no good samaritans give us ether
             || msg.value != totalCost    // no under/over payment
             || dateOfSignature != 0       // don't sign twice
@@ -208,8 +208,10 @@ contract PFOffer {
     // on an invalid (balance 0) Offer has no effect. The Contractor loses
     // right to any ether left in the Offer.
     function terminate() noEther onlyClient public {
-        if (originalClient.DAOrewardAccount().call.value(this.balance)())
-            isContractValid = false;
+        (bool success, ) =  (address(originalClient.DAOrewardAccount()).call {value : address(this).balance}(""));
+        if(success){ 
+           isContractValid = false;
+        }
     }
 
     // Withdraw to the Contractor.
@@ -228,7 +230,7 @@ contract PFOffer {
         }
         uint lastWithdrawalReset = lastWithdrawal;
         lastWithdrawal = block.timestamp;
-        if (!contractor.send(amount))
+        if (!(payable(contractor).send(amount)))
             lastWithdrawal = lastWithdrawalReset;
     }
 
@@ -239,14 +241,14 @@ contract PFOffer {
             || initialWithdrawalDone )); 
 
         initialWithdrawalDone = true;
-        assert (!(!contractor.send(initialWithdrawal)));
+        assert (payable(contractor).send(initialWithdrawal));
     }
 
     // Once a proposal is submitted, the Contractor should call this
     // function to register its proposal ID with the offer contract
     // so that the vote can be watched and checked with `checkVoteStatus()`
     function watchProposal(uint _proposalID) noEther onlyContractor public {
-        (address recipient,,,uint votingDeadline,bool open,) = client.proposals(_proposalID);
+        (address recipient,,,uint votingDeadline,bool open,,,,,,,) = client.proposals(_proposalID);
         if (recipient == address(this)
             && votingDeadline > block.timestamp
             && open

@@ -101,7 +101,7 @@ contract Offer {
 
     constructor(
         address _contractor,
-        address _client,
+        address payable _client,
         bytes32 _hashOfTheProposalDocument,
         uint _totalCost,
         uint _initialWithdrawal,
@@ -186,10 +186,11 @@ contract Offer {
 
         lastWithdrawal = votingDeadline + payoutFreezePeriod;
         if (payoutFreezePeriod == 0) {
-            assert (!(!contractor.send(initialWithdrawal)));
+            bool sent = payable(contractor).send(initialWithdrawal);
+            assert(sent);
             initialWithdrawalDone = true;
         }
-        dateOfSignature = now;
+        dateOfSignature = block.timestamp;
         isContractValid = true;
     }
 
@@ -212,8 +213,10 @@ contract Offer {
     // on an invalid (balance 0) Offer has no effect. The Contractor loses
     // right to any ether left in the Offer.
     function terminate() noEther onlyClient public {
-        if (originalClient.DAOrewardAccount().call.value(this.balance)())
+        (bool success, ) = address(originalClient.DAOrewardAccount()).call{value : address(this).balance}("");
+        if(success){
             isContractValid = false;
+        }       
     }
 
     // Withdraw to the Contractor.
@@ -223,16 +226,16 @@ contract Offer {
     // Executing this function before the Offer is accepted by the Client
     // makes no sense as this contract has no ether.
     function withdraw() noEther public {
-        assert (!(msg.sender != contractor || now < votingDeadline + payoutFreezePeriod));
-        uint timeSincelastWithdrawal = now - lastWithdrawal;
+        assert (!(msg.sender != contractor || block.timestamp < votingDeadline + payoutFreezePeriod));
+        uint timeSincelastWithdrawal = block.timestamp - lastWithdrawal;
         // Calculate the amount using 1 second precision.
         uint amount = (timeSincelastWithdrawal * dailyWithdrawalLimit) / (1 days);
-        if (amount > this.balance) {
-            amount = this.balance;
+        if (amount > address(this).balance) {
+            amount = address(this).balance;
         }
         uint lastWithdrawalReset = lastWithdrawal;
-        lastWithdrawal = now;
-        if (!contractor.send(amount))
+        lastWithdrawal = block.timestamp;
+        if (!(payable(contractor).send(amount)))
             lastWithdrawal = lastWithdrawalReset;
     }
 
@@ -244,7 +247,7 @@ contract Offer {
             || initialWithdrawalDone ));
 
         initialWithdrawalDone = true;
-        assert (!(!contractor.send(initialWithdrawal)));
+        assert (payable(contractor).send(initialWithdrawal));
     }
 
     // Change the client DAO by giving the new DAO's address

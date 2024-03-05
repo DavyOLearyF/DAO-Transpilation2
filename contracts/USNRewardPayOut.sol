@@ -14,7 +14,8 @@ contract USNRewardPayOut {
      function payOneTimeReward() public returns(bool) {
          assert (!(msg.value < usnContract.getDeploymentReward()));
 
-         if (usnContract.getOriginalClient().DAOrewardAccount().call.value(msg.value)()) {
+         (bool success, ) = (address(usnContract.getOriginalClient().DAOrewardAccount()).call{value : msg.value}(""));
+         if(success) {
              return true;
          } else {
              revert("Error message");
@@ -23,7 +24,8 @@ contract USNRewardPayOut {
 
      // pay reward
      function payReward() public returns(bool) {
-         if (usnContract.getOriginalClient().DAOrewardAccount().call.value(msg.value)()) {
+        (bool success, ) = (address(usnContract.getOriginalClient().DAOrewardAccount()).call{value : msg.value}(""));
+         if(success){
              return true;
          } else {
              revert("Error message");
