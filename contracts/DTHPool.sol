@@ -196,7 +196,7 @@ abstract contract DTHPool is DTHPoolInterface, Token, usingOraclize {
 
         balances[msg.sender] += _amount;
         totalSupply += _amount;
-        Delegate(msg.sender, _amount);
+        emit Delegate(msg.sender, _amount);
         return true;
     }
 
@@ -208,7 +208,7 @@ abstract contract DTHPool is DTHPoolInterface, Token, usingOraclize {
 
         balances[msg.sender] -= _amount;
         totalSupply -= _amount;
-        Undelegate(msg.sender, _amount);
+        emit Undelegate(msg.sender, _amount);
         return true;
     }
 
@@ -234,11 +234,11 @@ abstract contract DTHPool is DTHPoolInterface, Token, usingOraclize {
         proposalStatus.votingDeadline = votingDeadline;
         proposalStatus.motivation = _motivation;
 
-        VoteIntentionSet(_proposalID, _willVote, _supportsProposal);
+        emit VoteIntentionSet(_proposalID, _willVote, _supportsProposal);
 
         if (!_willVote) {
             proposalStatus.executed = true;
-            VoteExecuted(_proposalID);
+            emit VoteExecuted(_proposalID);
         }
 
         bool finalized = executeVote(_proposalID);
@@ -270,7 +270,7 @@ abstract contract DTHPool is DTHPoolInterface, Token, usingOraclize {
 
         dao.vote(_proposalID, proposalStatus.suportProposal);
         proposalStatus.executed = true;
-        VoteExecuted(_proposalID);
+        emit VoteExecuted(_proposalID);
 
         return true;
     }

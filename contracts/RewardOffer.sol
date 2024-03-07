@@ -50,20 +50,20 @@ contract RewardOffer is Offer {
         _payoutFreezePeriod) {
     }
 
-    function setRewardDivisor(uint _rewardDivisor) onlyClient noEther public {
+    function setRewardDivisor(uint _rewardDivisor) onlyClient public {
         rewardDivisor = _rewardDivisor;
     }
 
-    function setDeploymentReward(uint _deploymentReward) onlyClient noEther public {
+    function setDeploymentReward(uint _deploymentReward) onlyClient public {
         deploymentReward = _deploymentReward;
     }
 
     // non-value-transfer getters
-    function getRewardDivisor() noEther public view returns (uint) {
+    function getRewardDivisor() public view returns (uint) {
         return rewardDivisor;
     }
 
-    function getDeploymentReward() noEther public view returns (uint) {
+    function getDeploymentReward() public view returns (uint) {
         return deploymentReward;
     }
 }

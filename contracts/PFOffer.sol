@@ -107,7 +107,8 @@ contract PFOffer {
     }
 
     // Prevents methods from perfoming any value transfer
-    modifier noEther() {assert (!(msg.value > 0)) ; _;}
+    modifier noEther() {assert (!(msg.value > 0)) ; _;} //Not necessary anymore, if function isnt marked payable it is 
+                                                        //automatically unpayable
 
     constructor(
         address _contractor,
@@ -128,63 +129,63 @@ contract PFOffer {
     }
 
     // non-value-transfer getters
-    function getTotalCost() noEther public view returns (uint) {
+    function getTotalCost() public view returns (uint) {
         return totalCost;
     }
 
-    function getInitialWithdrawal() noEther public view returns (uint) {
+    function getInitialWithdrawal() public view returns (uint) {
         return initialWithdrawal;
     }
 
-    function getMinDailyWithdrawalLimit() noEther public view returns (uint128) {
+    function getMinDailyWithdrawalLimit() public view returns (uint128) {
         return minDailyWithdrawalLimit;
     }
 
-    function getDailyWithdrawalLimit() noEther public view returns (uint128) {
+    function getDailyWithdrawalLimit() public view returns (uint128) {
         return dailyWithdrawalLimit;
     }
 
-    function getContractor() noEther public view returns (address) {
+    function getContractor() public view returns (address) {
         return contractor;
     }
 
-    function getHashOfTheProposalDocument() noEther public view returns (bytes32) {
+    function getHashOfTheProposalDocument() public view returns (bytes32) {
         return hashOfTheProposalDocument;
     }
 
-    function getLastWithdrawal() noEther public view returns (uint) {
+    function getLastWithdrawal() public view returns (uint) {
         return lastWithdrawal;
     }
 
-    function getDateOfSignature() noEther public view returns (uint) {
+    function getDateOfSignature() public view returns (uint) {
         return dateOfSignature;
     }
 
-    function getClient() noEther public view returns (DAO) {
+    function getClient() public view returns (DAO) {
         return client;
     }
 
-    function getOriginalClient() noEther public view returns (DAO) {
+    function getOriginalClient() public view returns (DAO) {
         return originalClient;
     }
 
-    function getIsContractValid() noEther public view returns (bool) {
+    function getIsContractValid() public view returns (bool) {
         return isContractValid;
     }
 
-    function getInitialWithdrawalDone() noEther public view returns (bool) {
+    function getInitialWithdrawalDone() public view returns (bool) {
         return initialWithdrawalDone;
     }
 
-    function getWasApprovedBeforeDeadline() noEther public view returns (bool) {
+    function getWasApprovedBeforeDeadline() public view returns (bool) {
         return wasApprovedBeforeDeadline;
     }
 
-    function getProposalID() noEther public view returns (uint) {
+    function getProposalID() public view returns (uint) {
         return proposalID;
     }
 
-    function sign() public {
+    function sign() public payable{
         (,,,uint votingDeadline,,,,,,,,) = client.proposals(proposalID);
         assert (!(msg.sender != address(originalClient) // no good samaritans give us ether
             || msg.value != totalCost    // no under/over payment
@@ -197,7 +198,7 @@ contract PFOffer {
         lastWithdrawal = block.timestamp + payoutFreezePeriod;
     }
 
-    function setDailyWithdrawLimit(uint128 _dailyWithdrawalLimit) onlyClient noEther public{
+    function setDailyWithdrawLimit(uint128 _dailyWithdrawalLimit) onlyClient public{
         if (_dailyWithdrawalLimit >= minDailyWithdrawalLimit)
             dailyWithdrawalLimit = _dailyWithdrawalLimit;
     }
@@ -207,7 +208,7 @@ contract PFOffer {
     // The Client can terminate the ongoing Offer using this method. Using it
     // on an invalid (balance 0) Offer has no effect. The Contractor loses
     // right to any ether left in the Offer.
-    function terminate() noEther onlyClient public {
+    function terminate() onlyClient public {
         (bool success, ) =  (address(originalClient.DAOrewardAccount()).call {value : address(this).balance}(""));
         if(success){ 
            isContractValid = false;
@@ -220,7 +221,7 @@ contract PFOffer {
     // the current withdraw limit.
     // Executing this function before the Offer is signed off by the Client
     // makes no sense as this contract has no ether.
-    function withdraw() noEther public {
+    function withdraw() public {
         assert (!(msg.sender != contractor || block.timestamp < dateOfSignature + payoutFreezePeriod));
         uint timeSinceLastPayment = block.timestamp - lastWithdrawal;
         // Calculate the amount using 1 second precision.
@@ -235,7 +236,7 @@ contract PFOffer {
     }
 
     // Perform the withdrawal of the initial sum of money to the contractor
-    function performInitialWithdrawal() noEther public {
+    function performInitialWithdrawal() public {
         assert (!(msg.sender != contractor
             || block.timestamp < dateOfSignature + payoutFreezePeriod
             || initialWithdrawalDone )); 
@@ -247,7 +248,7 @@ contract PFOffer {
     // Once a proposal is submitted, the Contractor should call this
     // function to register its proposal ID with the offer contract
     // so that the vote can be watched and checked with `checkVoteStatus()`
-    function watchProposal(uint _proposalID) noEther onlyContractor public {
+    function watchProposal(uint _proposalID) onlyContractor public {
         (address recipient,,,uint votingDeadline,bool open,,,,,,,) = client.proposals(_proposalID);
         if (recipient == address(this)
             && votingDeadline > block.timestamp
@@ -259,7 +260,7 @@ contract PFOffer {
 
     // The proposal will not accept the results of the vote if it wasn't able
     // to be sure that YEA was able to succeed 48 hours before the deadline
-    function checkVoteStatus() noEther public {
+    function checkVoteStatus() public {
         (,,,uint votingDeadline,,,,,,uint yea,uint nay,) = client.proposals(proposalID);
         uint quorum = yea * 100 / client.totalSupply();
 
@@ -273,7 +274,7 @@ contract PFOffer {
     // Change the client DAO by giving the new DAO's address
     // warning: The new DAO must come either from a split of the original
     // DAO or an update via `newContract()` so that it can claim rewards
-    function updateClientAddress(DAO _newClient) onlyClient noEther public {
+    function updateClientAddress(DAO _newClient) onlyClient public {
         client = _newClient;
     }
 

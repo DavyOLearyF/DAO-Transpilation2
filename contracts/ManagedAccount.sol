@@ -35,7 +35,7 @@ abstract contract ManagedAccountInterface {
     /// @param _amount The amount of wei to send to `_recipient`
     /// @param _recipient The address to receive `_amount` of wei
     /// @return True if the send completed
-    function payOut(address _recipient, uint _amount) public virtual returns (bool);
+    function payOut(address _recipient, uint _amount) public virtual payable returns (bool);
 
     event PayOut(address indexed _recipient, uint _amount);
 }
@@ -52,15 +52,15 @@ contract ManagedAccount is ManagedAccountInterface{
     // When the contract receives a transaction without data this is called. 
     // It counts the amount of ether it receives and stores it in 
     // accumulatedInput.
-    fallback() external {
+    fallback() external payable {
         accumulatedInput += msg.value;
     }
 
-    function payOut(address _recipient, uint _amount) public override returns (bool) {
+    function payOut(address _recipient, uint _amount) public override payable returns (bool) {
         assert(!(msg.sender != owner || msg.value > 0 || (payOwnerOnly && _recipient != owner)));
         (bool success, ) = (_recipient.call{value: _amount}(""));
         if (success) {
-            PayOut(_recipient, _amount);
+            emit PayOut(_recipient, _amount);
             return true;
         } else {
             return false;

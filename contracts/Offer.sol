@@ -120,63 +120,63 @@ contract Offer {
     }
 
     // non-value-transfer getters
-    function getTotalCost() noEther public view returns (uint) {
+    function getTotalCost() public view returns (uint) {
         return totalCost;
     }
 
-    function getInitialWithdrawal() noEther public view returns (uint) {
+    function getInitialWithdrawal() public view returns (uint) {
         return initialWithdrawal;
     }
 
-    function getMinDailyWithdrawalLimit() noEther public view returns (uint128) {
+    function getMinDailyWithdrawalLimit() public view returns (uint128) {
         return minDailyWithdrawalLimit;
     }
 
-    function getDailyWithdrawalLimit() noEther public view returns (uint128) {
+    function getDailyWithdrawalLimit() public view returns (uint128) {
         return dailyWithdrawalLimit;
     }
 
-    function getPayoutFreezePeriod() noEther public view returns (uint) {
+    function getPayoutFreezePeriod() public view returns (uint) {
         return payoutFreezePeriod;
     }
 
-    function getContractor() noEther public view returns (address) {
+    function getContractor() public view returns (address) {
         return contractor;
     }
 
-    function getHashOfTheProposalDocument() noEther public view returns (bytes32) {
+    function getHashOfTheProposalDocument() public view returns (bytes32) {
         return hashOfTheProposalDocument;
     }
 
-    function getLastWithdrawal() noEther public view returns (uint) {
+    function getLastWithdrawal() public view returns (uint) {
         return lastWithdrawal;
     }
 
-    function getDateOfSignature() noEther public view returns (uint) {
+    function getDateOfSignature() public view returns (uint) {
         return dateOfSignature;
     }
 
-    function getClient() noEther public view returns (DAO) {
+    function getClient() public view returns (DAO) {
         return client;
     }
 
-    function getOriginalClient() noEther public view returns (DAO) {
+    function getOriginalClient() public view returns (DAO) {
         return originalClient;
     }
 
-    function getIsContractValid() noEther public view returns (bool) {
+    function getIsContractValid() public view returns (bool) {
         return isContractValid;
     }
 
-    function getInitialWithdrawalDone() noEther public view returns (bool) {
+    function getInitialWithdrawalDone() public view returns (bool) {
         return initialWithdrawalDone;
     }
 
-    function getVotingDeadline() noEther public view returns (uint) {
+    function getVotingDeadline() public view returns (uint) {
         return votingDeadline;
     }
 
-    function sign() public {
+    function sign() public payable {
         assert (! (msg.sender != address(originalClient) // no good samaritans give us ether
             || msg.value != totalCost    // no under/over payment
             || dateOfSignature != 0      // don't accept twice
@@ -196,13 +196,13 @@ contract Offer {
 
     // Once a proposal is submitted, the Contractor should call this
     // function to set the voting deadline of the proposal
-    function setVotingDeadline(uint _votingDeadline) noEther public {
+    function setVotingDeadline(uint _votingDeadline) public {
         assert (!(msg.sender != contractor || votingDeadline != 0));
 
         votingDeadline = _votingDeadline;
     }
 
-    function setDailyWithdrawLimit(uint128 _dailyWithdrawalLimit) onlyClient noEther public {
+    function setDailyWithdrawLimit(uint128 _dailyWithdrawalLimit) onlyClient public {
         if (_dailyWithdrawalLimit >= minDailyWithdrawalLimit)
             dailyWithdrawalLimit = _dailyWithdrawalLimit;
     }
@@ -212,7 +212,7 @@ contract Offer {
     // The Client can terminate the ongoing Offer using this method. Using it
     // on an invalid (balance 0) Offer has no effect. The Contractor loses
     // right to any ether left in the Offer.
-    function terminate() noEther onlyClient public {
+    function terminate() onlyClient public {
         (bool success, ) = address(originalClient.DAOrewardAccount()).call{value : address(this).balance}("");
         if(success){
             isContractValid = false;
@@ -225,7 +225,7 @@ contract Offer {
     // the current withdraw limit.
     // Executing this function before the Offer is accepted by the Client
     // makes no sense as this contract has no ether.
-    function withdraw() noEther public {
+    function withdraw() public {
         assert (!(msg.sender != contractor || block.timestamp < votingDeadline + payoutFreezePeriod));
         uint timeSincelastWithdrawal = block.timestamp - lastWithdrawal;
         // Calculate the amount using 1 second precision.
@@ -241,7 +241,7 @@ contract Offer {
 
     // Perform the withdrawal of the initial sum of money to the contractor
     // if that did not already happen during the signing
-    function performInitialWithdrawal() noEther public {
+    function performInitialWithdrawal() public {
         assert (!(msg.sender != contractor
             || block.timestamp < votingDeadline + payoutFreezePeriod
             || initialWithdrawalDone ));
@@ -253,7 +253,7 @@ contract Offer {
     // Change the client DAO by giving the new DAO's address
     // warning: The new DAO must come either from a split of the original
     // DAO or an update via `newContract()` so that it can claim rewards
-    function updateClientAddress(DAO _newClient) onlyClient noEther public{
+    function updateClientAddress(DAO _newClient) onlyClient public{
         client = _newClient;
     }
 

@@ -113,15 +113,15 @@ abstract contract TokenCreation is TokenCreationInterface, Token {
         balances[_tokenHolder] += token;
         totalSupply += token;
         weiGiven[_tokenHolder] += msg.value;
-        CreatedToken(_tokenHolder, token);
+        emit CreatedToken(_tokenHolder, token);
         if (totalSupply >= minTokensToCreate && !isFueled) {
             isFueled = true;
-            FuelingToDate(totalSupply);
+            emit FuelingToDate(totalSupply);
         }
         return true;
     }
 
-    function refund() noEther public override{
+    function refund() public override{
         if (block.timestamp > closingTime && !isFueled) {
             // Get extraBalance - will only succeed when called for the first time
             if (address(extraBalance).balance >= extraBalance.accumulatedInput())
@@ -131,7 +131,7 @@ abstract contract TokenCreation is TokenCreationInterface, Token {
             if (senderPayable.send(weiGiven[msg.sender])) { 
             // its the recipients responsibilty to ensure 
             // their address does not use too much gas
-                Refund(msg.sender, weiGiven[msg.sender]);
+                emit Refund(msg.sender, weiGiven[msg.sender]);
                 totalSupply -= balances[msg.sender];
                 balances[msg.sender] = 0;
                 weiGiven[msg.sender] = 0;

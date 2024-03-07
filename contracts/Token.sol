@@ -114,11 +114,11 @@ abstract contract Token is TokenInterface {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint256 _amount) noEther public override returns (bool success) {
+    function transfer(address _to, uint256 _amount) public override returns (bool success) {
         if (balances[msg.sender] >= _amount && _amount > 0) {
             balances[msg.sender] -= _amount;
             balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
+            emit Transfer(msg.sender, _to, _amount);
             return true;
         } else {
            return false;
@@ -129,7 +129,7 @@ abstract contract Token is TokenInterface {
         address _from,
         address _to,
         uint256 _amount
-    ) noEther public override returns (bool success) {
+    ) public override returns (bool success) {
 
         if (balances[_from] >= _amount
             && allowed[_from][msg.sender] >= _amount
@@ -138,7 +138,7 @@ abstract contract Token is TokenInterface {
             balances[_to] += _amount;
             balances[_from] -= _amount;
             allowed[_from][msg.sender] -= _amount;
-            Transfer(_from, _to, _amount);
+            emit Transfer(_from, _to, _amount);
             return true;
         } else {
             return false;
@@ -147,7 +147,7 @@ abstract contract Token is TokenInterface {
 
     function approve(address _spender, uint256 _amount) public override returns (bool success) {
         allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+        emit Approval(msg.sender, _spender, _amount);
         return true;
     }
     

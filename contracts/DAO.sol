@@ -190,7 +190,7 @@ abstract contract DAOInterface is Token{
     /// to the DAO, it can also be used to receive payments that should not be
     /// counted as rewards (donations, grants, etc.)
     /// @return bool Whether the DAO received the ether successfully
-    //function receiveEther() external payable virtual returns(bool);
+    function receiveEther() public payable virtual returns(bool);
 
 
     /// @notice `msg.sender` creates a proposal to send `_amount` Wei to
@@ -213,7 +213,7 @@ abstract contract DAOInterface is Token{
         bytes memory _transactionData,
         uint _debatingPeriod,
         bool _newCurator
-    ) public virtual returns (uint _proposalID);
+    ) public virtual payable returns (uint _proposalID);
     // ) onlyTokenholders public virtual returns (uint _proposalID);
 
     /// @notice Check that the proposal with the ID `_proposalID` matches the
@@ -396,15 +396,17 @@ contract DAO is DAOInterface, TokenCreation {
 
 // Causing problems 
 
-    // function receiveEther() external payable override returns (bool) {
-    //     return true;
-    // }
+    function receiveEther() public payable override returns (bool) {
+        return true;
+    }
 
     fallback () external override {
         if (block.timestamp < closingTime + creationGracePeriod && msg.sender != address(extraBalance))
             createTokenProxy(msg.sender);
         else
-            handleEtherReceived();
+            // handleEtherReceived();
+             receiveEther();
+           
     }
 
 //-------------------------------------------------------------------------------
@@ -412,11 +414,11 @@ contract DAO is DAOInterface, TokenCreation {
 //Added to fix an error 
 
 
-    receive() external payable {
-    // Custom logic when receiving Ether directly.
-    // For example, you could call an internal function here if needed.
-    handleEtherReceived();
-}
+//     receive() external payable {
+//     // Custom logic when receiving Ether directly.
+//     // For example, you could call an internal function here if needed.
+//     handleEtherReceived();
+// }
 
 function handleEtherReceived() internal returns (bool){
     // Your logic for handling received Ether.
@@ -433,7 +435,7 @@ function handleEtherReceived() internal returns (bool){
         bytes memory _transactionData,
         uint _debatingPeriod,
         bool _newCurator
-    ) onlyTokenholders public override returns (uint _proposalID) {
+    ) onlyTokenholders public override payable returns (uint _proposalID) {
 
         // Sanity check
         assert(!(_newCurator && (
@@ -483,7 +485,7 @@ function handleEtherReceived() internal returns (bool){
 
         sumOfProposalDeposits += msg.value;
 
-        ProposalAdded(
+        emit ProposalAdded(
             _proposalID,
             _recipient,
             _amount,
@@ -498,13 +500,13 @@ function handleEtherReceived() internal returns (bool){
         address _recipient,
         uint _amount,
         bytes memory _transactionData
-    ) noEther public view override returns (bool _codeChecksOut) {
+    )  public view override returns (bool _codeChecksOut) {
         Proposal storage p = proposals[_proposalID];
         return p.proposalHash == keccak256(abi.encodePacked(_recipient, _amount, _transactionData));
     }
 
 
-    function vote(uint _proposalID, bool _supportsProposal) onlyTokenholders noEther external override {
+    function vote(uint _proposalID, bool _supportsProposal) onlyTokenholders external override {
 
         Proposal storage p = proposals[_proposalID];
         assert(!(p.votedYes[msg.sender]
@@ -527,14 +529,14 @@ function handleEtherReceived() internal returns (bool){
             blocked[msg.sender] = _proposalID;
         }
 
-        Voted(_proposalID, _supportsProposal, msg.sender);
+        emit Voted(_proposalID, _supportsProposal, msg.sender);
     }
 
 
     function executeProposal(
         uint _proposalID,
         bytes memory _transactionData
-    ) noEther public override returns (bool _success) {
+    ) public override returns (bool _success) {
 
         Proposal storage p = proposals[_proposalID];
 
@@ -618,7 +620,7 @@ function handleEtherReceived() internal returns (bool){
         closeProposal(_proposalID);
 
         // Initiate event
-        ProposalTallied(_proposalID, _success, quorum);
+        emit ProposalTallied(_proposalID, _success, quorum);
     }
 
 
@@ -632,7 +634,7 @@ function handleEtherReceived() internal returns (bool){
     function splitDAO(
         uint _proposalID,
         address _newCurator
-    ) noEther onlyTokenholders external override returns (bool _success) {
+    ) onlyTokenholders external override returns (bool _success) {
 
         Proposal storage p = proposals[_proposalID];
 
@@ -689,7 +691,7 @@ function handleEtherReceived() internal returns (bool){
         DAOpaidOut[address(this)] -= paidOutToBeMoved;
 
         // Burn DAO Tokens
-        Transfer(msg.sender, address(0), balances[msg.sender]);
+        emit Transfer(msg.sender, address(0), balances[msg.sender]);
         withdrawRewardFor(msg.sender); // be nice, and get his rewards
         totalSupply -= balances[msg.sender];
         balances[msg.sender] = 0;
@@ -711,7 +713,7 @@ function handleEtherReceived() internal returns (bool){
     }
 
 
-    function retrieveDAOReward(bool _toMembers) external override noEther returns (bool _success) {
+    function retrieveDAOReward(bool _toMembers) external override returns (bool _success) {
         DAO dao = DAO(payable(msg.sender));
 
         assert(!((rewardToken[msg.sender] * DAOrewardAccount.accumulatedInput()) /
@@ -725,21 +727,21 @@ function handleEtherReceived() internal returns (bool){
         reward = address(DAOrewardAccount).balance < reward ? address(DAOrewardAccount).balance : reward;
 
         if(_toMembers) {
-            assert(!(!DAOrewardAccount.payOut(address(dao.rewardAccount()), reward)));    
+            assert(DAOrewardAccount.payOut(address(dao.rewardAccount()), reward));    
             }
         else {
-            assert(!(!DAOrewardAccount.payOut(address(dao), reward)));
+            assert(DAOrewardAccount.payOut(address(dao), reward));
         }
         DAOpaidOut[msg.sender] += reward;
         return true;
     }
 
-    function getMyReward() noEther public override returns (bool _success) {
+    function getMyReward() public override returns (bool _success) {
         return withdrawRewardFor(msg.sender);
     }
 
 
-    function withdrawRewardFor(address _account) noEther internal override returns (bool _success) {
+    function withdrawRewardFor(address _account) internal override returns (bool _success) {
         assert(!((balanceOf(_account) * rewardAccount.accumulatedInput()) / totalSupply < paidOut[_account]));
 
         uint reward =
@@ -816,17 +818,17 @@ function handleEtherReceived() internal returns (bool){
     }
 
 
-    function changeProposalDeposit(uint _proposalDeposit) noEther external override {
+    function changeProposalDeposit(uint _proposalDeposit) external override {
        assert(!(msg.sender != address(this) || _proposalDeposit > (actualBalance() + rewardToken[address(this)])
             / maxDepositDivisor)) ;
         proposalDeposit = _proposalDeposit;
     }
 
 
-    function changeAllowedRecipients(address _recipient, bool _allowed) noEther external override returns (bool _success) {
+    function changeAllowedRecipients(address _recipient, bool _allowed) external override returns (bool _success) {
         assert(!(msg.sender != curator));
         allowedRecipients[_recipient] = _allowed;
-        AllowedRecipientChanged(_recipient, _allowed);
+        emit AllowedRecipientChanged(_recipient, _allowed);
         return true;
     }
 
@@ -871,7 +873,7 @@ function handleEtherReceived() internal returns (bool){
     }
 
     function createNewDAO(address _newCurator) internal returns (DAO _newDAO) {
-        NewCurator(_newCurator);
+        emit NewCurator(_newCurator);
         return daoCreator.createDAO(
             _newCurator,
             0,
