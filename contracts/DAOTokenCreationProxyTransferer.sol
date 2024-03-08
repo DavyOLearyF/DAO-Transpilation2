@@ -28,9 +28,11 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
  * for example.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./TokenCreation.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 contract DAOTokenCreationProxyTransferer {
     address public owner;

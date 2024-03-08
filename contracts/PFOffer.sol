@@ -43,9 +43,11 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
   as the fix makes it into a solc release.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./DAO.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 contract PFOffer {
 

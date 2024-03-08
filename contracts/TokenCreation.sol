@@ -22,10 +22,12 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
  * Token Creation parameters
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./Token.sol";
 import "./ManagedAccount.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 abstract contract TokenCreationInterface {
 

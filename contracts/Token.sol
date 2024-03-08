@@ -28,9 +28,11 @@ Which is itself based on the Ethereum standardized contract APIs:
 https://github.com/ethereum/wiki/wiki/Standardized_Contract_APIs
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 /// @title Standard Token Contract.
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 abstract contract TokenInterface {
     mapping (address => uint256) balances;

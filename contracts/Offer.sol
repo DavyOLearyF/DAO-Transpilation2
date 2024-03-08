@@ -32,9 +32,11 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
                 Contractor.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./DAO.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 contract Offer {
 

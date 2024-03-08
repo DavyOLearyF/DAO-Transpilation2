@@ -27,7 +27,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.8.21;
+// SPDX-License-Identifier: UNLICENSED
+
+pragma solidity ^0.8.0;
 
 abstract contract OraclizeI {
     address public cbAddress;

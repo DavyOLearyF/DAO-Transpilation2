@@ -21,10 +21,12 @@ Standard smart contract for a Decentralized Autonomous Organization (DAO)
 to automate organizational governance and decision-making.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./TokenCreation.sol";
 import "./ManagedAccount.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 abstract contract DAOInterface is Token{
 
@@ -394,8 +396,6 @@ contract DAO is DAOInterface, TokenCreation {
         allowedRecipients[curator] = true;
     }
 
-// Causing problems 
-
     function receiveEther() public payable override returns (bool) {
         return true;
     }
@@ -404,29 +404,9 @@ contract DAO is DAOInterface, TokenCreation {
         if (block.timestamp < closingTime + creationGracePeriod && msg.sender != address(extraBalance))
             createTokenProxy(msg.sender);
         else
-            // handleEtherReceived();
              receiveEther();
            
     }
-
-//-------------------------------------------------------------------------------
-
-//Added to fix an error 
-
-
-//     receive() external payable {
-//     // Custom logic when receiving Ether directly.
-//     // For example, you could call an internal function here if needed.
-//     handleEtherReceived();
-// }
-
-function handleEtherReceived() internal returns (bool){
-    // Your logic for handling received Ether.
-
-    return true;
-}
-
-//-------------------------------------------------------------------------------
 
     function newProposal(
         address _recipient,
@@ -749,8 +729,14 @@ function handleEtherReceived() internal returns (bool){
 
         reward = address(rewardAccount).balance < reward ? address(rewardAccount).balance : reward;
 
-        assert(!(!rewardAccount.payOut(_account, reward)));
-        paidOut[_account] += reward;
+  //This is where the attack occurred!!
+  //--------------------------------------
+
+        assert(rewardAccount.payOut(_account, reward));
+        paidOut[_account] += reward;      
+
+ //--------------------------------------
+
         return true;
     }
 

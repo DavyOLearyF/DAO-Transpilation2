@@ -23,9 +23,11 @@ along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
   Feel free to use as a template for your own proposal.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "./Offer.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 contract RewardOffer is Offer {
 

@@ -15,10 +15,12 @@ You should have received a copy of the GNU lesser General Public License
 along with the DAO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// SPDX-License-Identifier: UNLICENSED
+
 import "../libs/oraclize.sol";
 import "./Token.sol";
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.0;
 
 /////////////////////
 // There is a solidity bug in the return parameters that it's not solved

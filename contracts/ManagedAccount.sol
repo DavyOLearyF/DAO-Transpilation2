@@ -21,7 +21,9 @@ Basic account, used by the DAO contract to separately manage both the rewards
 and the extraBalance accounts. 
 */
 
-pragma solidity ^0.8.21;
+// SPDX-License-Identifier: UNLICENSED
+
+pragma solidity ^0.8.0;
 
 abstract contract ManagedAccountInterface {
     // The only address with permission to withdraw from this account
