@@ -1,4 +1,4 @@
-# This repository contains TheDAO contract, updated to be consistent with Solidity version 0.8.2. To see the modifications made to the code to do this, please see the commit history. This endeavor was done as part of my work for the Final Year Project module in my final year as a computer science student at Trinity College Dublin.
+This repository contains TheDAO contract, updated to be consistent with Solidity version 0.8.2. To see the modifications made to the code to do this, please see the commit history. This endeavor was done as part of my work for the Final Year Project module in my final year as a computer science student at Trinity College Dublin.
 
 # Decentralized Autonomous Organization (DAO) Framework
 
